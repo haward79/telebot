@@ -7,7 +7,7 @@ import numpy as np
 import requests
 from io import BytesIO
 
-from config import quit_on_fatal, read_config
+from library.config import quit_on_fatal, read_config
 
 
 CONFIG: dict | None = None

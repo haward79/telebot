@@ -36,17 +36,17 @@ def fetch_events() -> List[Dict[str, str | datetime | timedelta | bool]]:
     global CONFIG
 
     client = DAVClient(
-        CONFIG['calendar_ap'],
-        username=CONFIG['username'],
-        password=CONFIG['password']
+        CONFIG.get('calendar_ap'),
+        username=CONFIG.get('username'),
+        password=CONFIG.get('password'),
     )
 
     calendars = [
         cal
         for cal in client.principal().get_calendars()
         if (
-            len(CONFIG['calendars']) == 0 or
-            cal.get_display_name() in CONFIG['calendars']
+            len(CONFIG.get('calendars')) == 0 or
+            cal.get_display_name() in CONFIG.get('calendars')
         )
     ]
 
@@ -63,7 +63,9 @@ def fetch_events() -> List[Dict[str, str | datetime | timedelta | bool]]:
             end=filter_end_date,
             event=True,
             expand=True,
-        ).reverse()
+        )
+
+        calendar_events.reverse()
 
         for calendar_event in calendar_events:
             v_event = calendar_event.get_icalendar_component()
@@ -93,9 +95,9 @@ if __name__ == '__main__':
 
     for event in events:
         send_text(f'''
-        {event["title"]}
-        起始於 {event["start"]}
-        結束於 {event["end"]}
-        總計時長 {event["duration"]}
-        登記於 {event["source"]} 日曆
-        ''')
+{event["title"]}
+ - 起始於 {event["start"]}
+ - 結束於 {event["end"]}
+ - 總計時長 {event["duration"]}
+ - 登記於 {event["source"]} 日曆
+''')
