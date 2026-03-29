@@ -1,0 +1,8 @@
+push-github:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE != "schedule"
+  image: $CI_REGISTRY/haward79/push2github/push2github:latest
+  variables:
+    GITHUB_URL: git@github.com:haward79/telebot.git
+  script:
+    - push2github
