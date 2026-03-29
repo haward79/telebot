@@ -2,4 +2,5 @@
 /venv
 /*.yml
 /*.yaml
+!/compose.yml
 !/.gitlab-ci.yml
