@@ -1,0 +1,7 @@
+token: 'get it from weatherapi.com'
+
+locations:
+  - name: Taipei 101, Taipei, Taiwan
+    coordinate:
+      - 25.0339741
+      - 121.5645382

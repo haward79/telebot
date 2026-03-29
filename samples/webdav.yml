@@ -1,0 +1,9 @@
+username: smith
+password: app-key
+
+file_ap: https://cloud.smith.fake/remote.php/dav/files/smith/
+
+calendar_ap: https://cloud.smith.fake/remote.php/dav
+calendars:
+  - private
+  - work

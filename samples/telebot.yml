@@ -1,0 +1,8 @@
+bot_name: Smith's secretary
+author: Smith
+website: https://smith.fake/
+contact: smith@fake
+
+token: 'your token'
+allowed_sender: 'sender id'
+receiver: 'receiver id or chat id'
