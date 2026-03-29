@@ -1,7 +1,7 @@
 
 import requests
 
-from config import quit_on_fatal, read_config
+from library.config import quit_on_fatal, read_config
 
 
 CONFIG: dict | None = None
