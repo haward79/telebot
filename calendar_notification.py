@@ -49,7 +49,7 @@ def format_duration(raw, as_days: bool) -> str:
 
     days = raw.days
     hours = raw.seconds // 3600
-    minutes = raw.seconds // 60
+    minutes = (raw.seconds - hours * 3600) // 60
 
     if days:
         return f"{days}天 {hours}時 {minutes}分"
@@ -77,6 +77,8 @@ def is_event_start(
         return False
 
     return (
+        # exclude midnight
+        event_start.hour != 0 and event_start.minute != 0 and
         cmp_point.replace(second=0, microsecond=0) ==
         event_start.replace(second=0, microsecond=0)
     )
