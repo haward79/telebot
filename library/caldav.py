@@ -32,7 +32,10 @@ def init_config() -> None:
     CONFIG = config
 
 
-def fetch_events() -> List[Dict[str, str | datetime | timedelta | bool]]:
+def fetch_events(
+    filter_start_date: datetime,
+    filter_end_date: datetime,
+) -> List[Dict[str, str | datetime | timedelta | bool]]:
     global CONFIG
 
     client = DAVClient(
@@ -49,9 +52,6 @@ def fetch_events() -> List[Dict[str, str | datetime | timedelta | bool]]:
             cal.get_display_name() in CONFIG.get('calendars')
         )
     ]
-
-    filter_start_date = datetime.now()
-    filter_end_date = filter_start_date + timedelta(days=6)
 
     event_collect = []
 
@@ -70,13 +70,18 @@ def fetch_events() -> List[Dict[str, str | datetime | timedelta | bool]]:
         for calendar_event in calendar_events:
             v_event = calendar_event.get_icalendar_component()
 
+            uid = v_event.uid
             summary = v_event.summary
             duration = v_event.duration
             start = v_event.start
             end = v_event.end
             whole_day = type(start) is date and type(end) is date
 
+            if whole_day:
+                end -= timedelta(days=1)
+
             event_collect.append({
+                'uid': uid,
                 'title': summary,
                 'start': start,
                 'end': end,
