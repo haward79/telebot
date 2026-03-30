@@ -8,7 +8,7 @@ from library.telebot import send_text
 
 
 WEEKDAY_TO_LOCALE = ['一', '二' , '三', '四', '五', '六', '日']
-NOTIFY_COMING_EVENT_BEFORE_SEC = 600  # 10 mins
+NOTIFY_COMING_EVENT_BEFORE_SEC = 900  # 15 mins
 
 
 def weekday_to_locale(obj: datetime | date) -> str:
