@@ -17,4 +17,4 @@ py_script="${1}.py"
     exit 3
 }
 
-docker compose exec app python "$py_script" "$@"
+docker compose exec app python "$py_script" "${@:2}"

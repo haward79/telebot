@@ -4,7 +4,6 @@ from caldav import DAVClient
 from datetime import date, datetime, timedelta, timezone
 
 from library.config import quit_on_fatal, read_config
-from library.telebot import send_text
 
 
 CONFIG: dict | None = None
