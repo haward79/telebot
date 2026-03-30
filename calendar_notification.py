@@ -3,7 +3,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Dict, List, Tuple
 import sys
 
-from library.caldav import fetch_events
+from library.caldav import fetch_events, get_local_now, get_local_tz
 from library.telebot import send_text
 
 
@@ -64,8 +64,8 @@ def date_range_to_datetime_range(
     end: date,
 ) -> Tuple[datetime, datetime]:
     return (
-        datetime.combine(start, time(0, 0, 0)),
-        datetime.combine(end, time(23, 59, 59)),
+        datetime.combine(start, time(0, 0, 0), tzinfo=get_local_tz()),
+        datetime.combine(end, time(23, 59, 59), tzinfo=get_local_tz()),
     )
 
 
@@ -115,7 +115,7 @@ def notify_next_week() -> None:
 
     send_events_notifications(
         fetch_events(*date_range_to_datetime_range(start, end)),
-        f"下週 {format_date(start)} - {format_date(end)} 的待辦行程",
+        f"⏰下週 {format_date(start)} - {format_date(end)} 的待辦行程",
     )
 
 
@@ -124,13 +124,13 @@ def notify_today() -> None:
 
     send_events_notifications(
         fetch_events(*date_range_to_datetime_range(today, today)),
-        f"今天 {format_date(today)} 的行程",
+        f"⏰今天 {format_date(today)} 的行程",
     )
 
 
 def notify_coming() -> None:
     start = (
-        datetime.now().replace(second=0, microsecond=0) +
+        get_local_now().replace(second=0, microsecond=0) +
         timedelta(seconds=NOTIFY_COMING_EVENT_BEFORE_SEC)
     )
     end = start + timedelta(seconds=59)
@@ -141,7 +141,7 @@ def notify_coming() -> None:
             for event in fetch_events(start, end)
             if is_event_start(start, event['start'])
         ],
-        '以下行程即將到來',
+        '⏰以下行程即將到來',
     )
 
 

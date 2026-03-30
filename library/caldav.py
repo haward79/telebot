@@ -1,13 +1,25 @@
 
 from typing import List, Dict
 from caldav import DAVClient
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from library.config import quit_on_fatal, read_config
 from library.telebot import send_text
 
 
 CONFIG: dict | None = None
+
+
+def get_local_tz() -> timezone:
+    return timezone(timedelta(hours=8))
+
+
+def get_local_now() -> datetime:
+    return datetime.now(tz=get_local_tz())
+
+
+def get_local_today() -> datetime:
+    return get_local_now().replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def init_config() -> None:
@@ -91,5 +103,6 @@ def fetch_events(
             })
 
     return event_collect
+
 
 init_config()
