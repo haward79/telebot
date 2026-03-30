@@ -1,103 +1,161 @@
 
-from typing import List, Dict
-from caldav import DAVClient
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
+from typing import Dict, List, Tuple
+import sys
 
-from library.config import quit_on_fatal, read_config
+from library.caldav import fetch_events
 from library.telebot import send_text
 
 
-CONFIG: dict | None = None
+WEEKDAY_TO_LOCALE = ['一', '二' , '三', '四', '五', '六', '日']
+NOTIFY_COMING_EVENT_BEFORE_SEC = 600  # 10 mins
 
 
-def init_config() -> None:
-    global CONFIG
+def weekday_to_locale(obj: datetime | date) -> str:
+    return WEEKDAY_TO_LOCALE[obj.weekday()]
 
-    config_template = {
-        'calendar_ap': None,
-        'username': None,
-        'password': None,
-        'calendars': None,
-    }
 
-    config = read_config(
-        'webdav.yml',
-        config_template,
+def format_date(raw: date) -> str:
+    return raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)})")
+
+
+def format_datetime(raw: datetime) -> str:
+    return raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)}) %p %I:%M:%S")
+
+
+def format_d_or_dt(
+    raw: date | datetime,
+    as_date: bool,
+) -> str:
+    if as_date:
+        return format_date(
+            raw
+            if type(raw) is date
+            else
+            raw.date()
+        )
+
+    return format_datetime(
+        raw
+        if type(raw) is datetime
+        else
+        datetime.combine(raw, time())
     )
 
-    if config is None:
-        quit_on_fatal()
+
+def format_duration(raw, as_days: bool) -> str:
+    if as_days:
+        return f"{raw.days}天"
+
+    days = raw.days
+    hours = raw.seconds // 3600
+    minutes = raw.seconds // 60
+
+    if days:
+        return f"{days}天 {hours}時 {minutes}分"
+    elif hours:
+        return f"{hours}時 {minutes}分"
+
+    return f"{minutes}分"
+
+
+def date_range_to_datetime_range(
+    start: date,
+    end: date,
+) -> Tuple[datetime, datetime]:
+    return (
+        datetime.combine(start, time(0, 0, 0)),
+        datetime.combine(end, time(23, 59, 59)),
+    )
+
+
+def is_event_start(
+    cmp_point: date | datetime,
+    event_start: date | datetime,
+) -> bool:
+    if type(cmp_point) is date or type(event_start) is date:
+        return False
+
+    return (
+        cmp_point.replace(second=0, microsecond=0) ==
+        event_start.replace(second=0, microsecond=0)
+    )
+
+
+def send_events_notifications(
+    events: List[Dict[str, str | datetime | timedelta | bool]],
+    texts: List[str] | str | None = None,
+) -> None:
+    if len(events) == 0:
         return
 
-    CONFIG = config
+    if isinstance(texts, str):
+        send_text(texts)
+    elif isinstance(texts, list):
+        for text in texts:
+            send_text(text)
+
+    for event in events:
+        event_whole_day = event["whole_day"]
+
+        send_text(f'''
+📔{event["title"]}
+ - 起始於 {format_d_or_dt(event["start"], event_whole_day)}
+ - 結束於 {format_d_or_dt(event["end"], event_whole_day)}
+ - 總計時長 {format_duration(event["duration"], event_whole_day)}
+ - 登記於 {event["source"]} 日曆
+''')
 
 
-def fetch_events() -> List[Dict[str, str | datetime | timedelta | bool]]:
-    global CONFIG
+def notify_next_week() -> None:
+    start = date.today() + timedelta(days=1)
+    end = start + timedelta(days=6)
 
-    client = DAVClient(
-        CONFIG.get('calendar_ap'),
-        username=CONFIG.get('username'),
-        password=CONFIG.get('password'),
+    send_events_notifications(
+        fetch_events(*date_range_to_datetime_range(start, end)),
+        f"下週 {format_date(start)} - {format_date(end)} 的待辦行程",
     )
 
-    calendars = [
-        cal
-        for cal in client.principal().get_calendars()
-        if (
-            len(CONFIG.get('calendars')) == 0 or
-            cal.get_display_name() in CONFIG.get('calendars')
-        )
-    ]
 
-    filter_start_date = datetime.now()
-    filter_end_date = filter_start_date + timedelta(days=6)
+def notify_today() -> None:
+    today = date.today()
 
-    event_collect = []
+    send_events_notifications(
+        fetch_events(*date_range_to_datetime_range(today, today)),
+        f"今天 {format_date(today)} 的行程",
+    )
 
-    for calendar in calendars:
-        calendar_name = calendar.get_display_name()
 
-        calendar_events = calendar.search(
-            start=filter_start_date,
-            end=filter_end_date,
-            event=True,
-            expand=True,
-        )
+def notify_coming() -> None:
+    start = (
+        datetime.now().replace(second=0, microsecond=0) +
+        timedelta(seconds=NOTIFY_COMING_EVENT_BEFORE_SEC)
+    )
+    end = start + timedelta(seconds=59)
 
-        calendar_events.reverse()
+    send_events_notifications(
+        [
+            event
+            for event in fetch_events(start, end)
+            if is_event_start(start, event['start'])
+        ],
+        '以下行程即將到來',
+    )
 
-        for calendar_event in calendar_events:
-            v_event = calendar_event.get_icalendar_component()
 
-            summary = v_event.summary
-            duration = v_event.duration
-            start = v_event.start
-            end = v_event.end
-            whole_day = type(start) is date and type(end) is date
+def notify_what() -> str:
+    if len(sys.argv) != 2:
+        return ''
 
-            event_collect.append({
-                'title': summary,
-                'start': start,
-                'end': end,
-                'duration': duration,
-                'whole_day': whole_day,
-                'source': calendar_name,
-            })
-
-    return event_collect
+    return sys.argv[1].strip().lower()
 
 
 if __name__ == '__main__':
-    init_config()
+    nw = notify_what()
 
-    events = fetch_events()
-
-    for event in events:
-        send_text(f'''
-{event["title"]}
- - 起始於 {event["start"]}
- - 結束於 {event["end"]}
- - 總計時長 {event["duration"]}
- - 登記於 {event["source"]} 日曆
-''')
+    if nw == 'week':
+        notify_next_week()
+    elif nw == 'today':
+        notify_today()
+    else:
+        notify_coming()
