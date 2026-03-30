@@ -1,103 +1,69 @@
 
-from typing import List, Dict
-from caldav import DAVClient
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time
 
-from library.config import quit_on_fatal, read_config
+from library.caldav import fetch_events
 from library.telebot import send_text
 
 
-CONFIG: dict | None = None
+WEEKDAY_TO_LOCALE = ['一', '二' , '三', '四', '五', '六', '日']
 
 
-def init_config() -> None:
-    global CONFIG
-
-    config_template = {
-        'calendar_ap': None,
-        'username': None,
-        'password': None,
-        'calendars': None,
-    }
-
-    config = read_config(
-        'webdav.yml',
-        config_template,
-    )
-
-    if config is None:
-        quit_on_fatal()
-        return
-
-    CONFIG = config
+def weekday_to_locale(obj: datetime | date) -> str:
+    return WEEKDAY_TO_LOCALE[obj.weekday()]
 
 
-def fetch_events() -> List[Dict[str, str | datetime | timedelta | bool]]:
-    global CONFIG
+def format_date(raw: date) -> str:
+    return raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)})")
 
-    client = DAVClient(
-        CONFIG.get('calendar_ap'),
-        username=CONFIG.get('username'),
-        password=CONFIG.get('password'),
-    )
 
-    calendars = [
-        cal
-        for cal in client.principal().get_calendars()
-        if (
-            len(CONFIG.get('calendars')) == 0 or
-            cal.get_display_name() in CONFIG.get('calendars')
-        )
-    ]
+def format_datetime(raw: datetime) -> str:
+    return raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)}) %p %I:%M:%S")
 
-    filter_start_date = datetime.now()
-    filter_end_date = filter_start_date + timedelta(days=6)
 
-    event_collect = []
-
-    for calendar in calendars:
-        calendar_name = calendar.get_display_name()
-
-        calendar_events = calendar.search(
-            start=filter_start_date,
-            end=filter_end_date,
-            event=True,
-            expand=True,
+def format_d_or_dt(
+    raw: datetime | date,
+    as_date: bool,
+) -> str:
+    if as_date:
+        return format_date(
+            raw
+            if type(raw) is date
+            else
+            raw.date()
         )
 
-        calendar_events.reverse()
+    return format_datetime(
+        raw
+        if type(raw) is datetime
+        else
+        datetime.combine(raw, time())
+    )
 
-        for calendar_event in calendar_events:
-            v_event = calendar_event.get_icalendar_component()
 
-            summary = v_event.summary
-            duration = v_event.duration
-            start = v_event.start
-            end = v_event.end
-            whole_day = type(start) is date and type(end) is date
+def format_duration(raw, as_days: bool) -> str:
+    if as_days:
+        return f"{raw.days}天"
 
-            event_collect.append({
-                'title': summary,
-                'start': start,
-                'end': end,
-                'duration': duration,
-                'whole_day': whole_day,
-                'source': calendar_name,
-            })
+    days = raw.days
+    hours = raw.seconds // 3600
+    minutes = raw.seconds // 60
 
-    return event_collect
+    if days:
+        return f"{days}天 {hours}時 {minutes}分"
+    elif hours:
+        return f"{hours}時 {minutes}分"
+
+    return f"{minutes}分"
 
 
 if __name__ == '__main__':
-    init_config()
+    for event in fetch_events():
+        event_whole_day = event["whole_day"]
 
-    events = fetch_events()
-
-    for event in events:
         send_text(f'''
-{event["title"]}
- - 起始於 {event["start"]}
- - 結束於 {event["end"]}
- - 總計時長 {event["duration"]}
+📔{event["title"]}
+ - 起始於 {format_d_or_dt(event["start"], event_whole_day)}
+ - 結束於 {format_d_or_dt(event["end"], event_whole_day)}
+ - 總計時長 {format_duration(event["duration"], event_whole_day)}
  - 登記於 {event["source"]} 日曆
 ''')
