@@ -137,7 +137,7 @@ async def save_image(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ) -> None:
-    if not block_unauthorized(update):
+    if not await block_unauthorized(update):
         return
 
     photo_id = update.message.photo[-1].file_id
@@ -155,7 +155,7 @@ async def save_file(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ) -> None:
-    if not block_unauthorized(update):
+    if not await block_unauthorized(update):
         return
 
     # Only handle documents not others like stickers.
@@ -180,7 +180,7 @@ async def save_command(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ) -> None:
-    if not block_unauthorized(update):
+    if not await block_unauthorized(update):
         return
 
     message = update.message.text.replace('/save', '').strip()
@@ -227,7 +227,7 @@ async def cant_understand(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ) -> None:
-    if not block_unauthorized(update):
+    if not await block_unauthorized(update):
         return
 
     await update.message.reply_text(TOO_STUPID_MSG)
