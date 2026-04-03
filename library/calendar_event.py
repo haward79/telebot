@@ -13,49 +13,49 @@ class CalendarEvent:
         whole_day: bool,
         calendar_name: str,
     ):
-        self.uid = uid
-        self.title = title
-        self.start = start
-        self.end = end
-        self.duration = duration
-        self.whole_day = whole_day
-        self.source = calendar_name
+        self._uid = uid
+        self._title = title
+        self._start = start
+        self._end = end
+        self._duration = duration
+        self._whole_day = whole_day
+        self._source = calendar_name
 
     def __iter__(self):
         return (
-            self.uid,
-            self.title,
-            self.start,
-            self.end,
-            self.duration,
-            self.whole_day,
-            self.source,
+            self._uid,
+            self._title,
+            self._start,
+            self._end,
+            self._duration,
+            self._whole_day,
+            self._source,
         )
 
     @property
     def uid(self) -> str:
-        return self.uid
+        return self._uid
 
     @property
     def title(self) -> str:
-        return self.title
+        return self._title
 
     @property
     def start(self) -> datetime:
-        return self.start
+        return self._start
 
     @property
     def end(self) -> datetime:
-        return self.end
+        return self._end
 
     @property
     def duration(self) -> timedelta:
-        return self.duration
+        return self._duration
 
     @property
     def whole_day(self) -> bool:
-        return self.whole_day
+        return self._whole_day
 
     @property
     def calendar_name(self) -> str:
-        return self.source
+        return self._source
