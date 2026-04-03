@@ -9,6 +9,8 @@ services:
       - /usr/share/fonts:/usr/share/fonts:ro
       - ./:/app
     working_dir: /app
-    command:
-      - python
-      - reply.py
+    command: >
+      /bin/bash -c '
+        python calendar_notification.py
+        python reply.py
+      '

@@ -3,6 +3,7 @@ from typing import List, Dict
 from caldav import DAVClient
 from datetime import date, datetime, timedelta, timezone
 
+from library.calendar_event import CalendarEvent
 from library.config import quit_on_fatal, read_config
 
 
@@ -46,7 +47,7 @@ def init_config() -> None:
 def fetch_events(
     filter_start_date: datetime,
     filter_end_date: datetime,
-) -> List[Dict[str, str | datetime | timedelta | bool]]:
+) -> List[CalendarEvent]:
     global CONFIG
 
     client = DAVClient(
@@ -64,7 +65,7 @@ def fetch_events(
         )
     ]
 
-    event_collect = []
+    event_collect: List[CalendarEvent] = []
 
     for calendar in calendars:
         calendar_name = calendar.get_display_name()
@@ -91,15 +92,15 @@ def fetch_events(
             if whole_day:
                 end -= timedelta(days=1)
 
-            event_collect.append({
-                'uid': uid,
-                'title': summary,
-                'start': start,
-                'end': end,
-                'duration': duration,
-                'whole_day': whole_day,
-                'source': calendar_name,
-            })
+            event_collect.append(CalendarEvent(
+                uid,
+                summary,
+                start,
+                end,
+                duration,
+                whole_day,
+                calendar_name,
+            ))
 
     return event_collect
 
