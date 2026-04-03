@@ -54,6 +54,8 @@ docker compose logs -f
 ```bash
 crontab -e
 
+# assume you put this project at /telebot
+
 # send raining report at three moments every day
 #  0 5,12,18  *   *   *   /bin/bash /telebot/cron_helper.bash routine_daily
 
@@ -62,7 +64,4 @@ crontab -e
 
 # send weekly events notification at early morning
 # 30 4        *   *   0   /bin/bash /telebot/cron_helper.bash calendar_notification week
-
-# send upcoming events notification
-#  * *        *   *   *   /bin/bash /telebot/cron_helper.bash calendar_notification
 ```
