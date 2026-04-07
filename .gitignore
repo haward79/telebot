@@ -1,6 +1,18 @@
-__pycache__
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# JetBrains
 /.idea
-/venv
+
+# For This Project
 /*.yml
 /*.yaml
 !/compose.yml

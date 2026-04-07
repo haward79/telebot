@@ -1,8 +1,8 @@
 
-FROM python
+FROM ghcr.io/astral-sh/uv:python3.12-trixie
 
-COPY ./requirements.txt /tmp/requirements.txt
+COPY ./pyproject.toml ./uv.lock /tmp/
 
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN uv export --directory /tmp --format requirements.txt | pip install -r /dev/stdin
 
-RUN rm -f /tmp/requirements.txt
+RUN rm -f /tmp/*
