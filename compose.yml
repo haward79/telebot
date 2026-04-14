@@ -11,6 +11,6 @@ services:
     working_dir: /app
     command: >
       /bin/bash -c '
-        python calendar_notification.py
+        python calendar_notification.py &
         python reply.py
       '

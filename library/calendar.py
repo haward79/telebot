@@ -141,7 +141,6 @@ def notify_coming() -> None:
     NOTIFY_COMING_THREAD = Thread(
         target=notify_coming_runner,
         args=(NOTIFY_COMING_SENT,),
-        daemon=True,
     )
 
     assert(NOTIFY_COMING_THREAD is not None)
