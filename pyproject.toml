@@ -42,3 +42,8 @@ dependencies = [
     "webdavclient3==3.14.6",
     "x-wr-timezone==2.0.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pyright[nodejs]>=1.1.409",
+]
