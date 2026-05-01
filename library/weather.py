@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import requests
 from io import BytesIO
+from requests import Response
 
 from library.config import quit_on_fatal, read_config
 
@@ -45,12 +46,16 @@ def fetch_rain_info(
         'days': '1'
     }
 
-    resp = requests.get(
-        'http://api.weatherapi.com/v1/forecast.json',
-        params=parameters
-    )
+    try:
+        resp = requests.get(
+            'http://api.weatherapi.com/v1/forecast.json',
+            params=parameters
+        )
+    except Exception as e:
+        print('Handled Exception:', e)
+        return None
 
-    if resp.status_code != 200:
+    if isinstance(resp, Response) and resp.status_code != 200:
         return None
 
     will_it_rain_hourly = []

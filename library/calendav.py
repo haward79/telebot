@@ -1,6 +1,6 @@
 
-from typing import List, Dict
-from calendav import DAVClient
+from typing import List
+from caldav import DAVClient
 from datetime import date, datetime, timedelta, timezone
 
 from library.calendar_event import CalendarEvent
@@ -48,22 +48,25 @@ def fetch_events(
     filter_start_date: datetime,
     filter_end_date: datetime,
 ) -> List[CalendarEvent]:
-    global CONFIG
-
-    client = DAVClient(
-        CONFIG.get('calendar_ap'),
-        username=CONFIG.get('username'),
-        password=CONFIG.get('password'),
-    )
-
-    calendars = [
-        cal
-        for cal in client.principal().get_calendars()
-        if (
-            len(CONFIG.get('calendars')) == 0 or
-            cal.get_display_name() in CONFIG.get('calendars')
+    try:
+        client = DAVClient(
+            CONFIG.get('calendar_ap'),
+            username=CONFIG.get('username'),
+            password=CONFIG.get('password'),
         )
-    ]
+
+        calendars = [
+            cal
+            for cal in client.principal().get_calendars()
+            if (
+                len(CONFIG.get('calendars')) == 0 or
+                cal.get_display_name() in CONFIG.get('calendars')
+            )
+        ]
+
+    except Exception as e:
+        print('Handled Exception:', e)
+        return []
 
     event_collect: List[CalendarEvent] = []
 
