@@ -6,3 +6,6 @@ contact: smith@fake
 token: 'your token'
 allowed_sender: 'sender id'
 receiver: 'receiver id or chat id'
+
+calendar_token: 'your token'
+calendar_receiver: 'receiver id or chat id'
