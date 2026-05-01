@@ -6,7 +6,7 @@ from typing import List, Tuple
 from os import environ
 import sys
 
-from library.caldav import fetch_events, get_local_now, get_local_tz
+from library.calendav import fetch_events, get_local_now, get_local_tz
 from library.calendar_event import CalendarEvent
 from library.telebot import send_text
 
@@ -109,7 +109,7 @@ def send_events_notifications(
  - 結束於 {format_d_or_dt(event.end, event_whole_day)}
  - 總計時長 {format_duration(event.duration, event_whole_day)}
  - 登記於 {event.calendar_name} 日曆
-''')
+''', 'calendar')
 
 
 def notify_next_week() -> None:

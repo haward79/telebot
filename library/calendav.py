@@ -1,6 +1,6 @@
 
 from typing import List, Dict
-from caldav import DAVClient
+from calendav import DAVClient
 from datetime import date, datetime, timedelta, timezone
 
 from library.calendar_event import CalendarEvent

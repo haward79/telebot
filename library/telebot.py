@@ -1,22 +1,22 @@
 
 import requests
+from requests import Response
 
 from library.config import quit_on_fatal, read_config
 
 
-CONFIG: dict | None = None
+CONFIG: dict = {}
+RETRY = 3
 
 
 def init_config() -> None:
     global CONFIG
 
-    # config has been already loaded
-    if CONFIG is not None:
-        return
-
     config_template = {
         'token': None,
         'receiver': None,
+        'calendar_token': None,
+        'calendar_receiver': None,
     }
 
     config = read_config(
@@ -31,31 +31,53 @@ def init_config() -> None:
     CONFIG = config
 
 
-def send_text(text: str) -> bool:
-    init_config()
+def get_config_value(key: str, prefix: str | None = None) -> str | int:
+    value = CONFIG.get(
+        f'{prefix}_{key}'
+        if prefix
+        else
+        key
+    )
 
-    global CONFIG
+    if isinstance(value, str) or isinstance(value, int):
+        return value
 
-    url = f'https://api.telegram.org/bot{CONFIG.get("token")}/sendMessage'
-    data = {
-        'chat_id': CONFIG.get("receiver"),
-        'text': text
-    }
-
-    req = requests.post(url, data=data)
-
-    return req.status_code == 200
+    quit_on_fatal()
+    return ''
 
 
-def send_image(image: bytes) -> bool:
-    init_config()
+def send_request(args: dict) -> bool:
+    req = None
 
-    global CONFIG
+    for i in range(RETRY):
+        try:
+            req = requests.post(**args)
+        except Exception as e:
+            print('Handled Exception:', e)
+        else:
+            break
 
-    url = f'https://api.telegram.org/bot{CONFIG.get("token")}/sendPhoto'
-    data = {'chat_id': CONFIG.get("receiver")}
-    files = {'photo': image}
+    return isinstance(req, Response) and req.status_code == 200
 
-    req = requests.post(url, data=data, files=files)
 
-    return req.status_code == 200
+def send_text(text: str, prefix: str | None = None) -> bool:
+    return send_request({
+        'url': f'https://api.telegram.org/bot{get_config_value("token", prefix)}/sendMessage',
+        'data': {
+            'chat_id': get_config_value("receiver", prefix),
+            'text': text,
+        }
+    })
+
+
+def send_image(image: bytes, prefix: str | None = None) -> bool:
+    return send_request({
+        'url': f'https://api.telegram.org/bot{get_config_value("token", prefix)}/sendPhoto',
+        'data': {
+            'chat_id': get_config_value("receiver", prefix)
+        },
+        'files': {'photo': image},
+    })
+
+
+init_config()
