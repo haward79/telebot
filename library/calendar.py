@@ -2,7 +2,7 @@
 from datetime import date, datetime, time, timedelta
 from threading import Thread
 from time import sleep
-from typing import List, Tuple
+from typing import List, Tuple, overload
 from os import environ
 import sys
 
@@ -33,31 +33,25 @@ def weekday_to_locale(obj: datetime | date) -> str:
     return WEEKDAY_TO_LOCALE[obj.weekday()]
 
 
-def format_date(raw: date) -> str:
-    return raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)})")
+@overload
+def format_d_or_dt(raw: datetime, as_date: bool = False) -> str:
+    ...
 
 
-def format_datetime(raw: datetime) -> str:
-    return raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)}) %p %I:%M:%S")
+@overload
+def format_d_or_dt(raw: date, as_date: bool = False) -> str:
+    ...
 
 
-def format_d_or_dt(
-    raw: date | datetime,
-    as_date: bool,
-) -> str:
-    if as_date:
-        return format_date(
-            raw
-            if type(raw) is date
-            else
-            raw.date()
-        )
+def format_d_or_dt(raw: datetime | date, as_date: bool = False) -> str:
+    if as_date and isinstance(raw, datetime):
+        raw = raw.date()
 
-    return format_datetime(
-        raw
-        if type(raw) is datetime
+    return (
+        raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)}) %p %I:%M:%S")
+        if isinstance(raw, datetime)
         else
-        datetime.combine(raw, time())
+        raw.strftime(f"%Y-%m-%d({weekday_to_locale(raw)})")
     )
 
 
@@ -118,7 +112,7 @@ def notify_next_week() -> None:
 
     send_events_notifications(
         fetch_events(*date_range_to_datetime_range(start, end)),
-        f"⏰ 下週 {format_date(start)} - {format_date(end)} 的待辦行程",
+        f"⏰ 下週 {format_d_or_dt(start)} - {format_d_or_dt(end)} 的待辦行程",
     )
 
 
@@ -127,7 +121,7 @@ def notify_today() -> None:
 
     send_events_notifications(
         fetch_events(*date_range_to_datetime_range(today, today)),
-        f"⏰ 今天 {format_date(today)} 的行程",
+        f"⏰ 今天 {format_d_or_dt(today)} 的行程",
     )
 
 

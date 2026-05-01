@@ -11,7 +11,7 @@ from requests import Response
 from library.config import quit_on_fatal, read_config
 
 
-CONFIG: dict | None = None
+CONFIG: dict = {}
 
 
 def init_config() -> None:
@@ -28,6 +28,7 @@ def init_config() -> None:
     )
 
     if config is None:
+        quit_on_fatal()
         return
 
     CONFIG = config
@@ -143,12 +144,9 @@ def fetch_rain_info(
 def get_rain_info() -> List[Tuple[str, bytes]]:
     init_config()
 
-    if CONFIG is None:
-        quit_on_fatal()
-
     rain_info_collect = []
 
-    for location in CONFIG.get('locations'):
+    for location in CONFIG.get('locations', []):
         rtn = fetch_rain_info(location['name'], location['coordinate'])
 
         if rtn is not None:
@@ -157,3 +155,6 @@ def get_rain_info() -> List[Tuple[str, bytes]]:
         sleep(1)
 
     return rain_info_collect
+
+
+init_config()

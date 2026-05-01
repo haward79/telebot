@@ -1,13 +1,13 @@
 
 from typing import List
-from caldav import DAVClient
+from caldav.davclient import DAVClient
 from datetime import date, datetime, timedelta, timezone
 
 from library.calendar_event import CalendarEvent
 from library.config import quit_on_fatal, read_config
 
 
-CONFIG: dict | None = None
+CONFIG: dict = {}
 
 
 def get_local_tz() -> timezone:
@@ -48,6 +48,8 @@ def fetch_events(
     filter_start_date: datetime,
     filter_end_date: datetime,
 ) -> List[CalendarEvent]:
+    target_calendars: List[str] = CONFIG.get('calendars', [])
+
     try:
         client = DAVClient(
             CONFIG.get('calendar_ap'),
@@ -59,8 +61,8 @@ def fetch_events(
             cal
             for cal in client.principal().get_calendars()
             if (
-                len(CONFIG.get('calendars')) == 0 or
-                cal.get_display_name() in CONFIG.get('calendars')
+                len(target_calendars) == 0 or
+                cal.get_display_name() in target_calendars
             )
         ]
 
@@ -71,7 +73,7 @@ def fetch_events(
     event_collect: List[CalendarEvent] = []
 
     for calendar in calendars:
-        calendar_name = calendar.get_display_name()
+        calendar_name = calendar.get_display_name() or ''
 
         calendar_events = calendar.search(
             start=filter_start_date,
@@ -88,8 +90,8 @@ def fetch_events(
             uid = v_event.uid
             summary = v_event.summary
             duration = v_event.duration
-            start = v_event.start
-            end = v_event.end
+            start: date | datetime = v_event.start
+            end: date | datetime = v_event.end
             whole_day = type(start) is date and type(end) is date
 
             if whole_day:

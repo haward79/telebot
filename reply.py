@@ -18,14 +18,11 @@ TOO_STUPID_MSG = '''
 看來我們的工程師還不夠努力！！
 '''
 
-LOGGER: Logger | None = None
-TELE_CONFIG: dict | None = None
-CLOUD_CONFIG: dict | None = None
+TELE_CONFIG: dict = {}
+CLOUD_CONFIG: dict = {}
 
 
-def init_logger() -> None:
-    global LOGGER
-
+def init_logger() -> Logger:
     # Enable logging
     logging.basicConfig(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -35,7 +32,10 @@ def init_logger() -> None:
     # Set higher logging level for httpx to avoid all GET and POST requests being logged
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
-    LOGGER = logging.getLogger(__name__)
+    return logging.getLogger(__name__)
+
+
+LOGGER: Logger = init_logger()
 
 
 def init_tele_config() -> None:
@@ -100,7 +100,7 @@ async def save_to_cloud(
     file_id: str,
     file_ext: str = ''
 ) -> str | None:
-    filename = Path(str(int(random() * 1e10)) + (file_ext if file_ext else ''))
+    filename = Path(str(int(random() * 1e10)) + file_ext)
     fullpath = IMAGE_TMP_DIR / filename
     has_failure = False
 
@@ -140,6 +140,9 @@ async def save_image(
     if not await block_unauthorized(update):
         return
 
+    if update.message is None:
+        return
+
     photo_id = update.message.photo[-1].file_id
     filename = await save_to_cloud(context, photo_id, '.jpg')
 
@@ -158,13 +161,21 @@ async def save_file(
     if not await block_unauthorized(update):
         return
 
+    if update.message is None:
+        return
+
     # Only handle documents not others like stickers.
     if not update.message.document:
         await update.message.reply_text(TOO_STUPID_MSG)
         return
 
     file_id = update.message.document.file_id
-    file_ext = Path(update.message.document.file_name).suffix
+    file_ext = (
+        Path(update.message.document.file_name).suffix
+        if update.message.document.file_name
+        else
+        ''
+    )
 
     filename = await save_to_cloud(context, file_id, file_ext)
 
@@ -181,6 +192,9 @@ async def save_command(
     context: ContextTypes.DEFAULT_TYPE
 ) -> None:
     if not await block_unauthorized(update):
+        return
+
+    if update.message is None or update.message.text is None:
         return
 
     message = update.message.text.replace('/save', '').strip()
@@ -200,11 +214,13 @@ async def start_command(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ) -> None:
-    if update.message:
-        await update.message.reply_html(rf'''
+    if update.message is None or update.effective_user is None:
+        return
+
+    await update.message.reply_html(rf'''
 哈囉，{update.effective_user.mention_html()}
 試著輸入 /help 來取得使用說明
-        ''')
+    ''')
 
 
 async def help_command(
@@ -230,12 +246,21 @@ async def cant_understand(
     if not await block_unauthorized(update):
         return
 
+    if update.message is None:
+        return
+
     await update.message.reply_text(TOO_STUPID_MSG)
 
 
 def bot_server() -> None:
+    token = TELE_CONFIG.get('token')
+
+    if not (isinstance(token, str) and len(token) > 0):
+        quit_on_fatal()
+        return
+
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token(TELE_CONFIG.get('token')).build()
+    application = Application.builder().token(token).build()
 
     # On image
     application.add_handler(MessageHandler(filters.PHOTO, save_image))
@@ -257,7 +282,6 @@ def bot_server() -> None:
 
 
 if __name__ == '__main__':
-    init_logger()
     init_tele_config()
     init_cloud_config()
 

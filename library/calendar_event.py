@@ -1,5 +1,5 @@
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 
 class CalendarEvent:
@@ -7,8 +7,8 @@ class CalendarEvent:
         self,
         uid: str,
         title: str,
-        start: datetime,
-        end: datetime,
+        start: datetime | date,
+        end: datetime | date,
         duration: timedelta,
         whole_day: bool,
         calendar_name: str,
@@ -41,11 +41,11 @@ class CalendarEvent:
         return self._title
 
     @property
-    def start(self) -> datetime:
+    def start(self) -> datetime | date:
         return self._start
 
     @property
-    def end(self) -> datetime:
+    def end(self) -> datetime | date:
         return self._end
 
     @property
