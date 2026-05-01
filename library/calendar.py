@@ -95,10 +95,10 @@ def send_events_notifications(
         return
 
     if isinstance(texts, str):
-        send_text(texts)
+        send_text(texts, 'calendar')
     elif isinstance(texts, list):
         for text in texts:
-            send_text(text)
+            send_text(text, 'calendar')
 
     for event in events:
         event_whole_day = event.whole_day
