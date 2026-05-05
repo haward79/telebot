@@ -23,9 +23,17 @@ static_analysis:
   script:
     - uv run pyright
 
+sonar_scan:
+  needs:
+    - static_analysis
+  image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/lazy_images/sonar_scanner
+  script:
+    - entry.bash
+
 push-github:
   needs:
     - static_analysis
+    - sonar_scan
   image: $CI_REGISTRY/haward79/push2github/push2github:latest
   variables:
     GITHUB_URL: git@github.com:haward79/telebot.git
