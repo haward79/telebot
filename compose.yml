@@ -4,6 +4,9 @@ services:
     restart: unless-stopped
     build:
       context: .
+      args:
+        - CI_REGISTRY=
+        - CI_PROJECT_NAMESPACE=
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /usr/share/fonts:/usr/share/fonts:ro

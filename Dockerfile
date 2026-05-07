@@ -1,4 +1,7 @@
 
+ARG CI_REGISTRY
+ARG CI_PROJECT_NAMESPACE
+
 FROM $CI_REGISTRY/$CI_PROJECT_NAMESPACE/lazy_images/uv
 
 COPY ./pyproject.toml ./uv.lock /tmp/
