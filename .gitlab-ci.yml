@@ -26,6 +26,9 @@ static_analysis:
 sonar_scan:
   needs:
     - static_analysis
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
   image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/lazy_images/sonar_scanner
   script:
     - entry.bash
