@@ -1,5 +1,6 @@
 
-from typing import Tuple, List
+from json import JSONDecodeError
+from typing import Tuple, List, Dict
 from time import sleep
 import matplotlib
 import matplotlib.pyplot as plt
@@ -34,58 +35,11 @@ def init_config() -> None:
     CONFIG = config
 
 
-def fetch_rain_info(
-    location_name: str,
-    coordinate: Tuple[float, float],
-) -> Tuple[str, bytes] | None:
-    if len(coordinate) != 2:
-        return None
-
-    parameters = {
-        'key': CONFIG.get('token'),
-        'q': str(coordinate[0]) + ',' + str(coordinate[1]),
-        'days': '1'
-    }
-
-    try:
-        resp = requests.get(
-            'http://api.weatherapi.com/v1/forecast.json',
-            params=parameters
-        )
-    except Exception as e:
-        print('Handled Exception:', e)
-        return None
-
-    if isinstance(resp, Response) and resp.status_code != 200:
-        return None
-
-    will_it_rain_hourly = []
-    chance_of_rain_hourly = []
-
-    try:
-        resp = resp.json()
-        hours_data = resp['forecast']['forecastday'][0]['hour']
-
-        for hour_data in hours_data:
-            will_it_rain_hourly.append(hour_data['will_it_rain'])
-            chance_of_rain_hourly.append(hour_data['chance_of_rain'])
-
-        if len(will_it_rain_hourly) != len(chance_of_rain_hourly):
-            raise ValueError('Data from api are wrong. The api may be changed.')
-
-    except ValueError as e:
-        print(f"ERROR: {e}")
-        return None
-
-    text = ''
-
-    time_set = []
+def hourly_timeset_to_str(time_set: List[int]) -> List[str]:
     time_set_formatted = []
 
-    # TODO
-    for i in range(len(will_it_rain_hourly)):
-        if will_it_rain_hourly[i] == 1:
-            time_set.append(i)
+    time_set = time_set.copy()
+    time_set.sort()
 
     i = 0
     while i < len(time_set):
@@ -105,8 +59,86 @@ def fetch_rain_info(
 
         i += 1
 
-    for period in time_set_formatted:
-        text += period + '\n'
+    return time_set_formatted
+
+
+def request_rain_info(coordinate_x: float, coordinate_y: float, days: int = 1) -> Dict | None:
+    if days <= 0:
+        return None
+
+    try:
+        resp = requests.get(
+            'https://api.weatherapi.com/v1/forecast.json',
+            params={
+                'key': CONFIG.get('token'),
+                'q': str(coordinate_x) + ',' + str(coordinate_y),
+                'days': str(days),
+            },
+        )
+    except Exception as e:
+        print('Handled Exception:', e)
+        return None
+
+    if not isinstance(resp, Response) or resp.status_code != 200:
+        return None
+
+    try:
+        resp_json = resp.json()
+    except (UnicodeDecodeError, JSONDecodeError) as e:
+        print('Handled Exception:', e)
+        return None
+
+    if not isinstance(resp_json, dict):
+        return None
+
+    return resp_json
+
+
+def fetch_hourly_rain_metrix(coordinate_x: float, coordinate_y: float) -> Tuple[List[int] | None, List[int] | None]:
+    resp = request_rain_info(coordinate_x, coordinate_y)
+
+    if resp is None:
+        return None, None
+
+    will_it_rain_hourly = []
+    chance_of_rain_hourly = []
+
+    try:
+        hours_data = resp['forecast']['forecastday'][0]['hour']
+
+        for hour_data in hours_data:
+            will_it_rain_hourly.append(hour_data['will_it_rain'])  # 1 or 0
+            chance_of_rain_hourly.append(hour_data['chance_of_rain'])  # in percent
+
+    except (KeyError, ValueError) as e:
+        print(f"Handled Exception: {e}")
+        return None, None
+
+    return will_it_rain_hourly, chance_of_rain_hourly
+
+
+def fetch_rain_info(
+    location_name: str,
+    coordinate: Tuple[float, float],
+) -> Tuple[str, bytes] | None:
+    if len(coordinate) != 2:
+        return None
+
+    (
+        will_it_rain_hourly,
+        chance_of_rain_hourly,
+    ) = fetch_hourly_rain_metrix(coordinate[0], coordinate[1])
+
+    if will_it_rain_hourly is None or chance_of_rain_hourly is None:
+        return None
+
+    time_set = [
+        i
+        for i in range(len(will_it_rain_hourly))
+        if will_it_rain_hourly[i] == 1
+    ]
+
+    text = '\n'.join(hourly_timeset_to_str(time_set))
 
     if len(text) > 0:
         text = '今天' + location_name + '地區在以下時段有降雨：\n' + text

@@ -49,7 +49,7 @@ def get_config_value(key: str, prefix: str | None = None) -> str | int:
 def send_request(args: dict) -> bool:
     req = None
 
-    for i in range(RETRY):
+    for _ in range(RETRY):
         try:
             req = requests.post(**args)
         except Exception as e:

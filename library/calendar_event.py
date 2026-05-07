@@ -22,7 +22,7 @@ class CalendarEvent:
         self._source = calendar_name
 
     def __iter__(self):
-        return (
+        return iter((
             self._uid,
             self._title,
             self._start,
@@ -30,7 +30,7 @@ class CalendarEvent:
             self._duration,
             self._whole_day,
             self._source,
-        )
+        ))
 
     @property
     def uid(self) -> str:

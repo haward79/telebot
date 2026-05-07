@@ -24,7 +24,6 @@ NOTIFY_COMING_EVENT_BEFORE_SEC = (
 )
 
 
-# global variables
 NOTIFY_COMING_THREAD: Thread | None = None
 NOTIFY_COMING_SENT: List[str] = []
 

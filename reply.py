@@ -4,6 +4,7 @@ import logging
 from logging import Logger
 from random import random
 from pathlib import Path
+import anyio
 from webdav3.client import Client
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
@@ -200,8 +201,8 @@ async def save_command(
     message = update.message.text.replace('/save', '').strip()
 
     # TODO
-    with open('Cloud/line/note.txt', 'a', encoding='utf-8') as fout:
-        fout.write(
+    async with await anyio.open_file('Cloud/line/note.txt', 'a', encoding='utf-8') as fout:
+        await fout.write(
             '\n' +
             datetime.now().strftime('%Y.%m.%d %H:%M:%S') +
             '\n' + message + '\n'
