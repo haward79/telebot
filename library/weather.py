@@ -10,6 +10,7 @@ from io import BytesIO
 from requests import Response
 
 from library.config import quit_on_fatal, read_config
+from library.logger import log_exception
 
 
 CONFIG: dict = {}
@@ -76,7 +77,7 @@ def request_rain_info(coordinate_x: float, coordinate_y: float, days: int = 1) -
             },
         )
     except Exception as e:
-        print('Handled Exception:', e)
+        log_exception(e)
         return None
 
     if not isinstance(resp, Response) or resp.status_code != 200:
@@ -85,7 +86,7 @@ def request_rain_info(coordinate_x: float, coordinate_y: float, days: int = 1) -
     try:
         resp_json = resp.json()
     except (UnicodeDecodeError, JSONDecodeError) as e:
-        print('Handled Exception:', e)
+        log_exception(e)
         return None
 
     if not isinstance(resp_json, dict):
@@ -111,7 +112,7 @@ def fetch_hourly_rain_metrix(coordinate_x: float, coordinate_y: float) -> Tuple[
             chance_of_rain_hourly.append(hour_data['chance_of_rain'])  # in percent
 
     except (KeyError, ValueError) as e:
-        print(f"Handled Exception: {e}")
+        log_exception(e)
         return None, None
 
     return will_it_rain_hourly, chance_of_rain_hourly

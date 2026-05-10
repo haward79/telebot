@@ -3,6 +3,7 @@ import requests
 from requests import Response
 
 from library.config import quit_on_fatal, read_config
+from library.logger import log_exception
 
 
 CONFIG: dict = {}
@@ -53,7 +54,7 @@ def send_request(args: dict) -> bool:
         try:
             req = requests.post(**args)
         except Exception as e:
-            print('Handled Exception:', e)
+            log_exception(e)
         else:
             break
 

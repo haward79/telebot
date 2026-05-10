@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from library.calendar_event import CalendarEvent
 from library.config import quit_on_fatal, read_config
+from library.logger import log_exception
 
 
 CONFIG: dict = {}
@@ -67,7 +68,7 @@ def fetch_events(
         ]
 
     except Exception as e:
-        print('Handled Exception:', e)
+        log_exception(e)
         return []
 
     event_collect: List[CalendarEvent] = []

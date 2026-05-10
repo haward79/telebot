@@ -10,6 +10,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 from library.config import quit_on_fatal, read_config
+from library.logger import log_exception
 
 
 IMAGE_TMP_DIR = Path('./images')
@@ -289,4 +290,7 @@ if __name__ == '__main__':
     if not CLOUD_CONFIG or not TELE_CONFIG:
         quit_on_fatal()
 
-    bot_server()
+    try:
+        bot_server()
+    except Exception as e:
+        log_exception(e)
